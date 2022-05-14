@@ -53,11 +53,6 @@ if '--plot' in args:
     plot = True
 else: 
     plot = False
-    
-if '--perspective' in args:
-    perspective = True
-else:
-    perspective = False
 
 print('select video file for tracking')
 videofile = askopenfilename(
@@ -79,12 +74,12 @@ outdir = askdirectory(title='Select output directory for tracking data')
 
 vidcap = cv2.VideoCapture(videofile)
 FPS = vidcap.get(cv2.CAP_PROP_FPS)
-vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(100*FPS))
+
+# video mid-point
+vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(cv2.CAP_PROP_FRAME_COUNT/2))         
 success,frame0 = vidcap.read()
-vidcap.set(cv2.CAP_PROP_POS_FRAMES,0)
 
 box_s = cv2.selectROIs("Select video frame ROI", frame0, fromCenter=False)
-
 ((xmin,ymin,width,height),) = tuple(map(tuple, box_s))
 roi = {
     'xmin'      : xmin,
@@ -93,6 +88,7 @@ roi = {
     'height'    : height,
 }
 cv2.destroyAllWindows()
+vidcap.set(cv2.CAP_PROP_POS_FRAMES,0)
 
 # initialize figure
 fig = plt.figure( figsize = (10,6) )
@@ -316,27 +312,4 @@ print('Tracking: {} for {} s of video'.format(t_tracking_end-t_tracking_start,po
 out_df = pd.DataFrame(data = out_data)
 print(out_df.head())
 print(out_df.tail())
-out_df.to_csv(os.path.join(outdir,'{}-dmbs.csv'.format(videofilename)))
-
-if perspective:
-    print('correcting trajectory for perspective view')
-    
-    # first, catch rearing bouts
-    out_df = correctRears(out_df)
-    
-    # warp trajectories    
-    corners = selectArenaCorners(bg_full)
-    saveCorners(videofilename,corners)
-    rect = loadCorners(videofilename)
-    
-    xdim = int(input('enter actual width (mm): '))
-    ydim = int(input('enter actual depth (mm): '))
-    known_dims = (xdim,ydim)
-    H = getTransformParams(rect,known_dims)
-    xsc,ysc = correctAllPoints(out_df['xpos'],out_df['ypos'],H)
-    
-    out_df['xcorr'] = xsc
-    out_df['ycorr'] = ysc
-    print(out_df.head())
-    
 out_df.to_csv(os.path.join(outdir,'{}-dmbs.csv'.format(videofilename)))

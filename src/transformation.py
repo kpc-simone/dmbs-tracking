@@ -78,9 +78,9 @@ def selectArenaCorners(frame):
     
     global arenaCorners
     return arenaCorners
-        
+      
 def saveCorners(recording,arenaCorners):
-    metadatafile = '../../eval-data/corners/all-corners.csv'
+    metadatafile = '../out data/all-corners.csv'
     if not os.path.exists(os.path.join(os.path.dirname(__file__),metadatafile)):
         row = ['recording','back left','back right','front right','front left']
         with open(os.path.join(os.path.dirname(__file__),metadatafile), 'a', newline='') as mdFile:
@@ -95,7 +95,7 @@ def saveCorners(recording,arenaCorners):
     mdFile.close()
     
 def loadCorners(recording):
-    cnrs_df = pd.read_csv(os.path.join(os.path.dirname(__file__),'../../eval-data/corners/all-corners.csv'))
+    cnrs_df = pd.read_csv(os.path.join(os.path.dirname(__file__),'../out data/all-corners.csv'))
     cnrs_row = cnrs_df[cnrs_df['recording'] == recording].iloc[0]
     print(cnrs_row)
     

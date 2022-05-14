@@ -1,10 +1,9 @@
 # dmbs-tracking
 Position tracking tools for behavior videos with temporally-varying illumination with angled views
 
-
-
 # Requirements
-- [Anaconda](https://www.anaconda.com/) with your system environment variables pointing to the Anaconda installation path (for a guide, see)
+- [Anaconda](https://www.anaconda.com/)
+- System environment variables point to Anaconda installation path
 - Project environment configuration:
 
 	In the /dmbs-tracking folder:

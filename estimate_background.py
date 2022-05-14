@@ -90,6 +90,7 @@ def estimate_background(vidcap,test_frame,pos_0=50,change_thresh=8000,alpha_ = 0
 
 def select_video():
     vidpath = askopenfilename(
+        title='Select video for which to estimate background',
         filetypes=[('Video Files', '*.avi; *.MP4'), ('All Files', '*.*')]
         )
     vidname = vidpath.split('/')[-1][:-4]
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     print(out_df.head())
     
     plt.show()
-    outdir = 'background models'
+    outdir = 'out data/bg'
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     cv2.imwrite(os.path.join(outdir,'{}_bg.png'.format(vidname)),bg_model)
