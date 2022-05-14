@@ -1,7 +1,7 @@
 # dmbs-tracking
-Position tracking tools for behavior videos with temporally-varying illumination with angled views
+Position tracking tools for behavior videos with temporally-varying illumination and/or angled views
 
-
+![](https://github.com/kpc-simone/dmbs-tracking/blob/main/docs/dmbs_tracking_demo.gif)
 
 # Requirements
 - [Anaconda](https://www.anaconda.com/) 
@@ -41,6 +41,8 @@ The script will then create dialog windows to prompt you to select (in order):
 3. The folder to save the tracking data 
 4. The ROI in the frame to analyze (use crosshairs to select the ROI, then press ENTER followed by ESC).
 
+![](https://github.com/kpc-simone/dmbs-tracking/blob/main/docs/roi%20selection.png)
+
 The script will then start tracking the foreground object and create a progressbar in the commandline terminal. When it is finished tracking, it will save the tracking data (as a .csv file) in the folder you specified.
 
 ## 3. Transform from pixel space to actual space
@@ -67,3 +69,7 @@ Frames prior to the given `start time` will be ignored for background model gene
 This script tracks the position of a foreground object in a video with varying illumination conditions given the video the analyze, a background model, and an ROI within the frame. The x- and y- coordinates of the foreground object over time are saved to a .csv file in a folder selected by the user. The script transforms position from pixel space to real space and corrects for perspective distortion (given real dimensions and corners of a rectangular arena).
 
 ## Position correction and transformation
+This script generates a homography to map pixel space to real space given real dimensions of a rectangular arena and its corners. For perspective-view videos, this recovers position as if the video had a top-down view
+
+![](https://github.com/kpc-simone/dmbs-tracking/blob/main/docs/perspective_dist.png)
+
