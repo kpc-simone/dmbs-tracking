@@ -68,6 +68,9 @@ if '--plot' in args:
     ax_infr = fig.add_subplot(gs[:,3:])
     ax_infr.set_title('Object position\n(Estimated)')
     
+    for ax in (fig.axes):
+        ax.set_axis_off()
+    
 else: 
     plot = False
 
@@ -106,9 +109,6 @@ roi = {
 }
 cv2.destroyAllWindows()
 vidcap.set(cv2.CAP_PROP_POS_FRAMES,0)
-
-for ax in (fig.axes):
-    ax.set_axis_off()
 
 # initialize thresholding parameters
 k = 11
