@@ -43,8 +43,8 @@ def correct_rear_xs(is_rearing,xraw,majax,orient):
 
 def correctRears(df):
     
-    df['orientation-abs'] = df['orientation'].dropna().abs()
-    or_hist, bin_edges = np.histogram(df['orientation-abs'].values, density=True,bins=100)
+    df['orientation-abs'] = df['orientation'].abs()
+    or_hist, bin_edges = np.histogram(df['orientation-abs'].dropna().values, density=True,bins=100)
     orient_thresh = get_otsu(or_hist,bin_edges[:-1])
     
     df['ax-ratio'] = df['maj-ax']/df['min-ax'] 
@@ -57,7 +57,9 @@ def correctRears(df):
     
     return df
     
+# demo
 if __name__ == '__main__':
+    
     df = pd.read_csv(askopenfilename())
     print(df.head())
     
