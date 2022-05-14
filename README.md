@@ -4,10 +4,10 @@ Position tracking tools for behavior videos with temporally-varying illumination
 
 
 # Requirements
-- [Anaconda](https://www.anaconda.com/) with your system environment variables pointing to the Anaconda installation path (for a guide, see)
-- Project environment configuration:
+- [Anaconda](https://www.anaconda.com/) 
+- Open the Anaconda Navigator and launch Powershell
+- use `cd` to navigate into the `dmbs-tracking` folder, then create a new configured environment:
 
-	In the /dmbs-tracking folder:
 	```
 	conda create --name dmbs_tracking_env --file requirements.txt
 	activate dmbs_tracking_env
@@ -39,20 +39,20 @@ The script will then create dialog windows to prompt you to select (in order):
 1. The video file (.avi or .mp4 currently supported)
 2. The background model (.png currently supported)
 3. The folder to save the tracking data 
-4. The ROI in the frame to analyze (use crosshairs to select the ROI, then press ENTER followed by ESC)
+4. The ROI in the frame to analyze (use crosshairs to select the ROI, then press ENTER followed by ESC).
 
 The script will then start tracking the foreground object and create a progressbar in the commandline terminal. When it is finished tracking, it will save the tracking data (as a .csv file) in the folder you specified.
 
 ## 3. Transform from pixel space to actual space
 
 ```
-python correct_position.py
+python correct_position.py --perspective
 ```
 The script will create dialog windows to prompt you to select (in order):
 1. The background model (.png currently supported)
 2. The tracking data file to select(.avi or .mp4 currently supported)
 3. The script will then show the background model image. Select the corners of the rectangular arena in the exact order requested (back left, back right, front right, front left). Then enter (in order) the actual dimensions of the rectangular arena (in mm).
-The script will save the corrected tracking data (as a .csv file) in the same folder as the raw tracking data file selected.
+The script will save the corrected tracking data (as a .csv file) in the same folder as the raw tracking data file selected. If `--perspective` is not given, no rearing detection/position correction will be done.
 
 # Implementation notes
 
