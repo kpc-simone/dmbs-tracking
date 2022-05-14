@@ -51,6 +51,23 @@ if __name__ == '__main__':
 
 if '--plot' in args:
     plot = True
+    
+    # initialize figure
+    fig = plt.figure( figsize = (10,4) )
+    gs = GridSpec(3,5,figure=fig)
+    
+    ax_bg = fig.add_subplot(gs[1,0])
+    ax_bg.set_title('Median-scaled\nbackground')
+    
+    ax_diff_g = fig.add_subplot(gs[1,1])
+    ax_diff_g.set_title('Difference frame')
+    
+    ax_thresh_g = fig.add_subplot(gs[1,2])
+    ax_thresh_g.set_title('Thresholded')
+    
+    ax_infr = fig.add_subplot(gs[:,3:])
+    ax_infr.set_title('Object position\n(Estimated)')
+    
 else: 
     plot = False
 
@@ -89,16 +106,6 @@ roi = {
 }
 cv2.destroyAllWindows()
 vidcap.set(cv2.CAP_PROP_POS_FRAMES,0)
-
-# initialize figure
-fig = plt.figure( figsize = (10,6) )
-gs = GridSpec(6,6,figure=fig)
-ax_bg = fig.add_subplot(gs[0,1])
-ax_diff_int = fig.add_subplot(gs[1,1])
-ax_diff_g = fig.add_subplot(gs[1,2])
-ax_thresh_g = fig.add_subplot(gs[2,1])
-ax_mask = fig.add_subplot(gs[3,1])
-ax_infr = fig.add_subplot(gs[:,4:])
 
 for ax in (fig.axes):
     ax.set_axis_off()
@@ -253,38 +260,29 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
             if t_idx == 0:
                 # plot the data
                 plot_bg = ax_bg.imshow(cv2.convertScaleAbs(bg_model),cmap='gray')
-                
-                plot_diff_int = ax_diff_int.imshow(np.uint8( diff1 *255), cmap = 'gray')
                 plot_diff_gray = ax_diff_g.imshow(np.uint8( diff ), cmap = 'gray')
-
                 plot_thresh_gray = ax_thresh_g.imshow(at, cmap = 'gray')
-                
-                plot_mask = ax_mask.imshow(at)
                 plot_infr = ax_infr.imshow(frame0)
                 plot_pos, = ax_infr.plot(xpos,ypos,color='r',marker='.', markersize=10)
                 
                 plot_dict = {
-                    'plot_bg'           : plot_bg,
-                    'plot_diff_int'       : plot_diff_int,                     
-                    'plot_diff_gray'       : plot_diff_gray,                     
-                    'plot_thresh_gray'     : plot_thresh_gray,
-                    
-                    'plot_mask'         : plot_mask,
-                    'plot_infr'         : plot_infr,
-                    'plot_pos'          : plot_pos,
+                    'plot_bg'               : plot_bg,                   
+                    'plot_diff_gray'        : plot_diff_gray,                     
+                    'plot_thresh_gray'      : plot_thresh_gray,
+                    'plot_infr'             : plot_infr,
+                    'plot_pos'              : plot_pos,
                 }
                 
             else:
                 
                 plot_dict['plot_bg'].set_data(bg_scaled)
-                plot_dict['plot_diff_int'].set_data(diff1*255)
                 plot_dict['plot_diff_gray'].set_data(diff)
                 plot_dict['plot_thresh_gray'].set_data(at)
                 
-                plot_dict['plot_mask'].set_data(at)
                 plot_dict['plot_infr'].set_data(frame0)
                 plot_dict['plot_pos'].set_data(xpos,ypos)
             
+            fig.tight_layout()
             plt.draw()
             plt.pause(1e-17)
             frame1 = frame0

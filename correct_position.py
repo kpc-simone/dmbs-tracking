@@ -7,6 +7,11 @@ from transformation import *
 from detect_rearing import *
 
 if __name__ == '__main__':
+    args = sys.argv[1:]
+    if '--perspective' in args:
+        perspective_view = True
+    else:
+        perspective_view = False
     
     bg_full = cv2.imread(askopenfilename(
         title='Select background model image file',
@@ -33,12 +38,19 @@ if __name__ == '__main__':
     
     # apply warping to tracking data in pixel space
     out_df = pd.read_csv(tracking_filepath)
-    out_df = correctRears(out_df)           # catch rearing bouts
-    xsc,ysc = correctAllPoints(out_df['xpos'],out_df['ypos'],H)
     
-    out_df['xcorr'] = xsc
-    out_df['ycorr'] = ysc
-    print(out_df.head())
-    
-    out_dir = os.path.dirname(tracking_filepath)
-    out_df.to_csv(os.path.join(out_dir,'{}-corrected.csv'.format(tracking_basename)))
+    if perspective_view:
+        out_df = correctRears(out_df)           # catch rearing bouts
+        xsc,ysc = correctAllPoints(out_df['xpos'],out_df['ypos'],H)
+        out_df['xcorr'] = xsc
+        out_df['ycorr'] = ysc
+        print(out_df.head())
+        out_dir = os.path.dirname(tracking_filepath)
+        out_df.to_csv(os.path.join(out_dir,'{}-corrected.csv'.format(tracking_basename)))
+    else:
+        xsc,ysc = correctAllPoints(out_df['xraw'],out_df['yraw'],H)
+        out_df['xcorr'] = xsc
+        out_df['ycorr'] = ysc
+        print(out_df.head())
+        out_dir = os.path.dirname(tracking_filepath)
+        out_df.to_csv(os.path.join(out_dir,'{}-corrected.csv'.format(tracking_basename)))
