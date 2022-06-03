@@ -141,7 +141,6 @@ t_tracking_start = time.time()
 #MSEC set works, but does not provide correct .get
 #FPS set works, and provides correct .get
 vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(pos_0*FPS)+1)
-print(vidcap.get(cv2.CAP_PROP_POS_FRAMES)/FPS)
 
 mj = []
 mn = []
@@ -154,6 +153,10 @@ bbhs = []
 
 bg_scaled = np.zeros_like(bg_blur)
 mu_half_bg = np.median(np.median(bg_blur,axis=0),axis=0)
+
+print('tracking start time:',vidcap.get(cv2.CAP_PROP_POS_FRAMES)/FPS)
+print('fps:',FPS)
+missed_frames = 0
 with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
     while ( vidcap.get(cv2.CAP_PROP_POS_FRAMES)/FPS < pos_f ):
         #print(vidcap.get(cv2.CAP_PROP_POS_FRAMES)/FPS)
@@ -211,83 +214,98 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
 
         regions = [region for region in sorted(regionprops(lbl_a), key=lambda r: r.area, reverse=True)]
         confidence = 0
-        for region in regions[1:]:
-            area = region.area    
-            if region.area > 250:
-                yc, xc = region.centroid
-                minr, minc, maxr, maxc = region.bbox
-                bbh = maxr-minr
-                bbw = maxc-minc
-                
-                orient = region.orientation
-                majax = region.major_axis_length
-                minax = region.minor_axis_length
+        if len(regions) > 1:
+            for region in regions[1:]:
+                area = region.area    
+                if region.area > 250:
+                    yc, xc = region.centroid
+                    minr, minc, maxr, maxc = region.bbox
+                    bbh = maxr-minr
+                    bbw = maxc-minc
                     
-                ypos = yc
-                xpos = xc
-                
-                confidence = region.area / np.sqrt( (xpos-x_old)**2 + (ypos-y_old)**2 ) / len(regions)
-                log_confidence = np.log10(np.absolute(confidence))
-                x_old = xpos
-                y_old = ypos   
-        
-                bbhs.append(bbh)
-                bbws.append(bbw)
-                
-                mj.append(majax)
-                mn.append(minax)
-                dr.append(orient)
-                
-                xs.append(xpos)
-                ys.append(ypos)
-                cs.append(confidence)
-                break
+                    orient = region.orientation
+                    majax = region.major_axis_length
+                    minax = region.minor_axis_length
+                        
+                    ypos = yc
+                    xpos = xc
+                    
+                    confidence = region.area / np.sqrt( (xpos-x_old)**2 + (ypos-y_old)**2 ) / len(regions)
+                    log_confidence = np.log10(np.absolute(confidence))
+                    x_old = xpos
+                    y_old = ypos   
             
-            else:
-                bbhs.append(np.nan)
-                bbws.append(np.nan)
+                    bbhs.append(bbh)
+                    bbws.append(bbw)
+                    
+                    mj.append(majax)
+                    mn.append(minax)
+                    dr.append(orient)
+                    
+                    xs.append(xpos)
+                    ys.append(ypos)
+                    cs.append(confidence)
+                    break
                 
-                mj.append(np.nan)
-                mn.append(np.nan)
-                dr.append(np.nan)
+                else:
+                    missed_frames += 1
+                    bbhs.append(np.nan)
+                    bbws.append(np.nan)
+                    
+                    mj.append(np.nan)
+                    mn.append(np.nan)
+                    dr.append(np.nan)
+                    
+                    xs.append(np.nan)
+                    ys.append(np.nan)
+                    cs.append(0)
+                    break
+            if plot:
                 
-                xs.append(np.nan)
-                ys.append(np.nan)
-                cs.append(0)
-                break
-        if plot:
+                if t_idx == 0:
+                    # plot the data
+                    plot_bg = ax_bg.imshow(cv2.convertScaleAbs(bg_model),cmap='gray')
+                    plot_diff_gray = ax_diff_g.imshow(np.uint8( diff ), cmap = 'gray')
+                    plot_thresh_gray = ax_thresh_g.imshow(at, cmap = 'gray')
+                    plot_infr = ax_infr.imshow(frame0)
+                    plot_pos, = ax_infr.plot(xpos,ypos,color='r',marker='.', markersize=10)
+                    
+                    plot_dict = {
+                        'plot_bg'               : plot_bg,                   
+                        'plot_diff_gray'        : plot_diff_gray,                     
+                        'plot_thresh_gray'      : plot_thresh_gray,
+                        'plot_infr'             : plot_infr,
+                        'plot_pos'              : plot_pos,
+                    }
+                    
+                else:
+                    
+                    plot_dict['plot_bg'].set_data(bg_scaled)
+                    plot_dict['plot_diff_gray'].set_data(diff)
+                    plot_dict['plot_thresh_gray'].set_data(at)
+                    
+                    plot_dict['plot_infr'].set_data(frame0)
+                    plot_dict['plot_pos'].set_data(xpos,ypos)
+                
+                fig.tight_layout()
+                plt.draw()
+                plt.pause(1e-17)
+                frame1 = frame0
+                frame2 = frame1
+                t_idx += 1
+        else:
+            missed_frames += 1
+            #print('no regions detected')
+            bbhs.append(np.nan)
+            bbws.append(np.nan)
             
-            if t_idx == 0:
-                # plot the data
-                plot_bg = ax_bg.imshow(cv2.convertScaleAbs(bg_model),cmap='gray')
-                plot_diff_gray = ax_diff_g.imshow(np.uint8( diff ), cmap = 'gray')
-                plot_thresh_gray = ax_thresh_g.imshow(at, cmap = 'gray')
-                plot_infr = ax_infr.imshow(frame0)
-                plot_pos, = ax_infr.plot(xpos,ypos,color='r',marker='.', markersize=10)
-                
-                plot_dict = {
-                    'plot_bg'               : plot_bg,                   
-                    'plot_diff_gray'        : plot_diff_gray,                     
-                    'plot_thresh_gray'      : plot_thresh_gray,
-                    'plot_infr'             : plot_infr,
-                    'plot_pos'              : plot_pos,
-                }
-                
-            else:
-                
-                plot_dict['plot_bg'].set_data(bg_scaled)
-                plot_dict['plot_diff_gray'].set_data(diff)
-                plot_dict['plot_thresh_gray'].set_data(at)
-                
-                plot_dict['plot_infr'].set_data(frame0)
-                plot_dict['plot_pos'].set_data(xpos,ypos)
+            mj.append(np.nan)
+            mn.append(np.nan)
+            dr.append(np.nan)
             
-            fig.tight_layout()
-            plt.draw()
-            plt.pause(1e-17)
-            frame1 = frame0
-            frame2 = frame1
-            t_idx += 1
+            xs.append(np.nan)
+            ys.append(np.nan)
+            cs.append(0)
 
 t_tracking_end = time.time()
 
@@ -304,10 +322,14 @@ out_data = {
     'confidence'        : cs,
 }
 
+print('tracking end time:',vidcap.get(cv2.CAP_PROP_POS_FRAMES)/FPS )
 print('Speed results:')
 print('Tracking: {} for {} s of video'.format(t_tracking_end-t_tracking_start,pos_f-pos_0))
 
 out_df = pd.DataFrame(data = out_data)
 print(out_df.head())
 print(out_df.tail())
+print('expected rows: {}, actual rows: {}'.format( int( (pos_f-pos_0)*FPS ),len(xs)) )
+print('expected FPS: {}, actual FPS: {}'.format( FPS,1/out_df['time'].diff().mean() ))
+print('missed rows:',missed_frames)
 out_df.to_csv(os.path.join(outdir,'{}-dmbs.csv'.format(videofilename)))

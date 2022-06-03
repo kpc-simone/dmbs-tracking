@@ -10,6 +10,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     if '--perspective' in args:
         perspective_view = True
+        
     else:
         perspective_view = False
     
@@ -49,7 +50,7 @@ if __name__ == '__main__':
         out_df.to_csv(os.path.join(out_dir,'{}-corrected.csv'.format(tracking_basename)))
     else:
         xsc,ysc = correctAllPoints(out_df['xraw'],out_df['yraw'],H)
-        out_df['xcorr'] = xsc
+        out_df['xcorr'] = [ x + xdim / 1000/ 2 for x in xsc ]
         out_df['ycorr'] = ysc
         print(out_df.head())
         out_dir = os.path.dirname(tracking_filepath)
