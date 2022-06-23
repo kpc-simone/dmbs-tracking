@@ -10,6 +10,7 @@ from skimage.morphology import disk, binary_erosion, binary_opening, binary_clos
 from skimage.segmentation import flood_fill
 from skimage.measure import label, regionprops, regionprops_table
 from matplotlib.gridspec import GridSpec
+import progressbar
 from PIL import Image
 import scipy.ndimage as nd
 from scipy import stats
@@ -37,56 +38,58 @@ def estimate_background(vidcap,test_frame,pos_0=50,change_thresh=8000,alpha_ = 0
 
     vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(pos_0*FPS))
     f_start = vidcap.get(cv2.CAP_PROP_POS_FRAMES)
-    while vidcap.isOpened():
-        success,frame = vidcap.read()
+    with progressbar.ProgressBar( max_value = 251.0) as pbar:
+        while vidcap.isOpened():
+            success,frame = vidcap.read()
 
-        if frame is None:
-            break
-        
-        #frame = np.float32(getROI(frame,roi))
-        change = np.absolute(frame - wa_mov)
-        
-        cv2.accumulateWeighted(frame,wa_mov,alpha = alpha_ )
-        ret,thresh = cv2.threshold(change[:,:,2],50,255,cv2.THRESH_BINARY_INV)
-        mask = np.uint8(thresh)
-        
-        ret,thresh_inv = cv2.threshold(change[:,:,2],50,255,cv2.THRESH_BINARY)
-        mask_inv = np.uint8(thresh_inv)
-        
-        change_med = np.median(np.median(change[:,:,2],axis=0),axis=0)
-        #change_med = 10
-        change_rel = (change[:,:,2] - change_med ).sum().sum() / 255
-        weighting_factor = wf_max / ( 1 + np.exp( - ( change_rel - change_thresh ) ) )
-        
-        cv2.accumulateWeighted(frame,wa,weighting_factor,mask)
-        cv2.accumulateWeighted(ones*np.median(np.median(wa_mov,axis=0),axis=0)*1.1,wa,weighting_factor,mask_inv)
-        
-        diff = wa_mov - wa
-        diff_metric = diff.mean().mean().mean()
-        #if weighting_factor > 0.8*wf_max:
-        #    print(diff_metric)
-        
-        ts.append(ts[-1] + 1/FPS)
-        ws.append(weighting_factor)
-        cs.append(change_rel)
-        dfms.append(diff_metric)
-        
-        if abs(diff_metric) < 5.0:
-            bg_model = wa
-            model_built = True
+            if frame is None:
+                break
             
-            f_built = vidcap.get(cv2.CAP_PROP_POS_FRAMES)
-            f_used = f_built - f_start
+            #frame = np.float32(getROI(frame,roi))
+            change = np.absolute(frame - wa_mov)
+            
+            cv2.accumulateWeighted(frame,wa_mov,alpha = alpha_ )
+            ret,thresh = cv2.threshold(change[:,:,2],50,255,cv2.THRESH_BINARY_INV)
+            mask = np.uint8(thresh)
+            
+            ret,thresh_inv = cv2.threshold(change[:,:,2],50,255,cv2.THRESH_BINARY)
+            mask_inv = np.uint8(thresh_inv)
+            
+            change_med = np.median(np.median(change[:,:,2],axis=0),axis=0)
+            #change_med = 10
+            change_rel = (change[:,:,2] - change_med ).sum().sum() / 255
+            weighting_factor = wf_max / ( 1 + np.exp( - ( change_rel - change_thresh ) ) )
+            
+            cv2.accumulateWeighted(frame,wa,weighting_factor,mask)
+            cv2.accumulateWeighted(ones*np.median(np.median(wa_mov,axis=0),axis=0)*1.1,wa,weighting_factor,mask_inv)
+            
+            diff = wa_mov - wa
+            diff_metric = diff.mean().mean().mean()
+            #if weighting_factor > 0.8*wf_max:
+            #    print(diff_metric)
+            
+            ts.append(ts[-1] + 1/FPS)
+            ws.append(weighting_factor)
+            cs.append(change_rel)
+            dfms.append(diff_metric)
+            
+            pbar.update(255.0 - diff_metric)
+            if abs(diff_metric) < 5.0:
+                bg_model = wa
+                model_built = True
+                
+                f_built = vidcap.get(cv2.CAP_PROP_POS_FRAMES)
+                f_used = f_built - f_start
 
-            out_data = {
-                'time'          : ts,
-                'change'        : cs,
-                'weighting'     : ws,
-                'diff metric'   : dfms,
-            }
-            out_df = pd.DataFrame(data=out_data)
-            
-            return bg_model,out_df,f_used,wa_mov,change
+                out_data = {
+                    'time'          : ts,
+                    'change'        : cs,
+                    'weighting'     : ws,
+                    'diff metric'   : dfms,
+                }
+                out_df = pd.DataFrame(data=out_data)
+                
+                return bg_model,out_df,f_used,wa_mov,change
 
 def select_video():
     vidpath = askopenfilename(

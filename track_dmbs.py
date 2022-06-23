@@ -266,7 +266,8 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
                     # plot the data
                     plot_bg = ax_bg.imshow(cv2.convertScaleAbs(bg_model),cmap='gray')
                     plot_diff_gray = ax_diff_g.imshow(np.uint8( diff ), cmap = 'gray')
-                    plot_thresh_gray = ax_thresh_g.imshow(at, cmap = 'gray')
+                    #plot_thresh_gray = ax_thresh_g.imshow(at, cmap = 'gray')
+                    plot_thresh_gray = ax_thresh_g.imshow(lbl_a)
                     plot_infr = ax_infr.imshow(frame0)
                     plot_pos, = ax_infr.plot(xpos,ypos,color='r',marker='.', markersize=10)
                     
@@ -282,7 +283,8 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
                     
                     plot_dict['plot_bg'].set_data(bg_scaled)
                     plot_dict['plot_diff_gray'].set_data(diff)
-                    plot_dict['plot_thresh_gray'].set_data(at)
+                    #plot_dict['plot_thresh_gray'].set_data(at)
+                    plot_dict['plot_thresh_gray'].set_data(lbl_a)
                     
                     plot_dict['plot_infr'].set_data(frame0)
                     plot_dict['plot_pos'].set_data(xpos,ypos)

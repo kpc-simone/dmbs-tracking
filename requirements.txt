@@ -1,4 +1,4 @@
-scikit_image==0.17.2
+scikit-image==0.17.2
 scipy==1.7.3
 pandas==1.2.1
 numpy==1.19.5
@@ -6,5 +6,4 @@ matplotlib==3.3.3
 opencv_python==4.5.1.48
 imageio==2.9.0
 Pillow==9.1.0
-progressbar33==2.4
-skimage==0.0
+progressbar2==3.50.1
