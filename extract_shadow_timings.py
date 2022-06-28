@@ -5,7 +5,58 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import sys,os
 import cv2
+
+def extract_shadow_timings(ts,intsy,FPS,ignore,recording,shadow_dur = 8.):
+    # get lowest value
+    
+    thresh = np.median(intsy) - 0.9 * ( np.median(intsy) - intsy.min() )
+    shdf = pd.DataFrame(columns=['recording','shadowON-abs','shadowOFF-abs'])
+    t = ts.max()
+    idx = int(len(intsy)-1)
+    
+    fig,ax = plt.subplots(1,1,figsize=(8,3))
+    while (t > ignore) & (idx > 1):
+        val = intsy[idx]
+        t = ts[idx]
+        if val < thresh:
+            ax.scatter(t,val,color='k')
+            shdf = shdf.append({
+                'recording'     : recording,
+                'shadowON-abs'  : t - shadow_dur,
+                'shadowOFF-abs'  : t,
+                },ignore_index=True)
+            idx -= int(FPS * shadow_dur)
+        else:
+            idx -= 1
+    shdf = shdf.sort_values('shadowON-abs').reset_index(drop=True)
+    shdf['trial'] = shdf.index + 1
+    cols = shdf.columns.tolist()
+    cols = cols[-1:] + cols[:-1]
+    shdf = shdf[cols]
+    
+    print(shdf.head(15))
+    
+    ax.plot(ts,intsy,color='dimgray')
+    ax.axhline(thresh,color='k',linestyle='--')
+    ax.text(0,thresh+1,'detection threshold')
+    
+    for r,row in shdf.iterrows():
+        start = row['shadowON-abs']
+        stop = row['shadowOFF-abs']
+        ax.axvspan(start,stop,color='silver')
+        ax.text(start,thresh,'shadow {}'.format(r+1),rotation=90)
+    
+    ax.set_ylabel('Mean ROI pixel intensity')
+    ax.set_xlabel('Time (s)')
+    
+    for spine in ['top','right']:
+        ax.spines[spine].set_visible(False)
+    
+    fig.tight_layout()
+    plt.show()
+    return shdf
 
 def getROI(frame,roi):
     
@@ -18,7 +69,7 @@ def getROI(frame,roi):
     
     return roi
 
-ts = 400
+ts = 100
 t0 = 0
 
 videofile = askopenfilename()
@@ -56,12 +107,9 @@ while vidcap.isOpened():
     intsy_roi_prev = intsy[t_idx]
     t_idx += 1
     
-fig, ax = plt.subplots(1,1,squeeze=False,figsize=(8,3))
-ax[0,0].plot(ts,intsy,color='k')
-for spine in ['top','right']:
-    ax[0,0].spines[spine].set_visible(False)
-ax[0,0].set_xlabel('Time (s)')
-ax[0,0].set_ylabel('Mirror mean pixel intensity')
-
-fig.tight_layout()
-plt.show()
+shdf = extract_shadow_timings(ts,intsy,FPS,
+                                ignore=60,
+                                recording=os.path.basename(videofile),
+                                shadow_dur=8.)
+out_dir = os.path.dirname(videofile)
+shdf.to_csv(os.path.join(out_dir,'{}-shadowtimings.csv'.format(os.path.basename(videofile))))
