@@ -3,6 +3,7 @@
 from tkinter.filedialog import askopenfilename
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+from scipy import signal
 import pandas as pd
 import numpy as np
 import sys,os
@@ -10,8 +11,10 @@ import cv2
 
 def extract_shadow_timings(ts,intsy,FPS,ignore,recording,shadow_dur = 8.):
     # get lowest value
+    sos = signal.butter(6, FPS/2.1, 'low', fs=FPS, output='sos')
+    intsy = signal.sosfilt(sos, intsy)
     
-    thresh = np.median(intsy) - 0.9 * ( np.median(intsy) - intsy.min() )
+    thresh = np.median(intsy) - 0.65 * ( np.median(intsy) - intsy.min() )
     shdf = pd.DataFrame(columns=['recording','shadowON-abs','shadowOFF-abs'])
     t = ts.max()
     idx = int(len(intsy)-1)
