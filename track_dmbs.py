@@ -48,6 +48,13 @@ def merge_labels(labels_image,labels_to_merge,label_after_merge):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
+    
+    if len(args) == 1:
+        pos_0 = 0
+        pos_f = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)/FPS
+    else:
+        pos_0 = float(args[0])
+        pos_f = float(args[1])
 
 if '--plot' in args:
     plot = True
@@ -96,7 +103,7 @@ vidcap = cv2.VideoCapture(videofile)
 FPS = vidcap.get(cv2.CAP_PROP_FPS)
 
 # video mid-point
-vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(cv2.CAP_PROP_FRAME_COUNT/2))         
+vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(pos_0 * FPS))         
 success,frame0 = vidcap.read()
 
 box_s = cv2.selectROIs("Select video frame ROI", frame0, fromCenter=False)
@@ -132,8 +139,7 @@ xpos = 0
 ypos = 0
 
 # loop through video and display          
-pos_0 = 0
-pos_f = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)/FPS
+
 t_idx = 0
 
 t_tracking_start = time.time()
