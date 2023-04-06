@@ -192,7 +192,7 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
         #diff = np.absolute( ( ( diff - mu_half_diff ) / ( diff.max().max() - mu_half_diff ) ) * 255 )
         #diff = subGradients(diff)
         
-        hist = cv2.calcHist([np.uint8(diff)],[0],None,[256],[0,256])
+        hist = cv2.calcHist([255-np.uint8(diff)],[0],None,[256],[0,256])
         hist_norm = hist.ravel()/hist.sum()
         Q = hist_norm.cumsum()
         bins = np.arange(256)
@@ -215,14 +215,22 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
         
         #ret,at = cv2.threshold(np.uint8(diff),otsu_level,255,cv2.THRESH_BINARY)        
         at = binary_closing(cv2.adaptiveThreshold(255-np.uint8(diff),255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,blocksize,otsu_level),selem_d)
+        lbl_a = label(at,background=1)
         
-        lbl_a = label(at,background=255)
+        # fig,(ax1,ax2,ax3) = plt.subplots(1,3)
+        # ax1.imshow(255-np.uint8(diff))
+        # ax2.imshow(at)
+        # ax3.imshow(lbl_a)
+        # plt.show()
 
         regions = [region for region in sorted(regionprops(lbl_a), key=lambda r: r.area, reverse=True)]
         confidence = 0
-        if len(regions) > 1:
-            for region in regions[1:]:
-                area = region.area    
+        # print('number of objects:',len(regions))
+        # print('areas, sorted: ',[r.area for r in regions])
+        
+        if len(regions) >= 1:
+            for region in regions:#[1:]:
+                area = region.area
                 if region.area > 250:
                     yc, xc = region.centroid
                     minr, minc, maxr, maxc = region.bbox
@@ -267,7 +275,6 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
                     cs.append(0)
                     break
             if plot:
-                
                 if t_idx == 0:
                     # plot the data
                     plot_bg = ax_bg.imshow(cv2.convertScaleAbs(bg_model),cmap='gray')
@@ -284,9 +291,7 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
                         'plot_infr'             : plot_infr,
                         'plot_pos'              : plot_pos,
                     }
-                    
                 else:
-                    
                     plot_dict['plot_bg'].set_data(bg_scaled)
                     plot_dict['plot_diff_gray'].set_data(diff)
                     #plot_dict['plot_thresh_gray'].set_data(at)
@@ -296,6 +301,7 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
                     plot_dict['plot_pos'].set_data(xpos,ypos)
                 
                 fig.tight_layout()
+                fig.suptitle('\n number of objects: {}'.format(len(regions))+'\n object areas: {}'.format([r.area for r in regions]) )
                 plt.draw()
                 plt.pause(1e-17)
                 frame1 = frame0
@@ -303,7 +309,7 @@ with progressbar.ProgressBar( max_value = ( pos_f - pos_0 ) ) as p_bar:
                 t_idx += 1
         else:
             missed_frames += 1
-            #print('no regions detected')
+            print('no regions detected')
             bbhs.append(np.nan)
             bbws.append(np.nan)
             

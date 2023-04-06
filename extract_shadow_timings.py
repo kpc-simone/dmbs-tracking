@@ -9,12 +9,18 @@ import numpy as np
 import sys,os
 import cv2
 
+### script parameters
+shadow_duration_ = 8.
+ignore_ = 60.
+
 def extract_shadow_timings(ts,intsy,FPS,ignore,recording,shadow_dur = 8.):
     # get lowest value
     sos = signal.butter(6, FPS/2.1, 'low', fs=FPS, output='sos')
     intsy = signal.sosfilt(sos, intsy)
     
-    thresh = np.median(intsy) - 0.65 * ( np.median(intsy) - intsy.min() )
+    # thresh = np.median(intsy) - 0.65 * ( np.median(intsy) - intsy.min() )
+    thresh = np.median(intsy) - 5 * np.std(intsy)
+    
     shdf = pd.DataFrame(columns=['recording','shadowON-abs','shadowOFF-abs'])
     t = ts.max()
     idx = int(len(intsy)-1)
@@ -81,6 +87,7 @@ FPS = vidcap.get(cv2.CAP_PROP_FPS)
 vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(ts * FPS))
 success,frame = vidcap.read()
 
+cv2.namedWindow("Select mirror ROI",cv2.WINDOW_NORMAL)
 box_s = cv2.selectROIs("Select mirror ROI", frame, fromCenter=False)
 ((xmin,ymin,width,height),) = tuple(map(tuple, box_s))
 roi = {
@@ -111,8 +118,11 @@ while vidcap.isOpened():
     t_idx += 1
     
 shdf = extract_shadow_timings(ts,intsy,FPS,
-                                ignore=60,
-                                recording=os.path.basename(videofile),
-                                shadow_dur=8.)
-out_dir = os.path.dirname(videofile)
-shdf.to_csv(os.path.join(out_dir,'{}-shadowtimings.csv'.format(os.path.basename(videofile))))
+                                ignore = ignore_,
+                                recording = os.path.basename(videofile),
+                                shadow_dur = shadow_duration_
+                                )
+
+videofilename = videofile.split('.')[0]
+out_dir = os.path.dirname(videofilename)
+shdf.to_csv(os.path.join(out_dir,'{}-shadowtimings.csv'.format(os.path.basename(videofilename))))
