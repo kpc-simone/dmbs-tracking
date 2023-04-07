@@ -15,7 +15,6 @@ ignore_ = 60.               # the time interval at the beginning of the recordin
 threshold_factor_ = 3.      # the factor by which to scale the std dev during the baseline for intensity thresholding
 ###
 
-
 def extract_shadow_timings(ts,intsy,FPS,recording,ignore,shadow_dur = 8.,threshold_factor = 3.):
     # get lowest value
     sos = signal.butter(6, FPS/2.1, 'low', fs=FPS, output='sos')
