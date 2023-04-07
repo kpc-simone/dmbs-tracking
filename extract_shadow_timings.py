@@ -9,17 +9,20 @@ import numpy as np
 import sys,os
 import cv2
 
-### script parameters
-shadow_duration_ = 8.
-ignore_ = 60.
+### script parameters ###
+shadow_duration_ = 8.       # the duration of the shadow; the script runs the video backwards
+ignore_ = 60.               # the time interval at the beginning of the recording where no shadows are presented
+threshold_factor_ = 3.      # the factor by which to scale the std dev during the baseline for intensity thresholding
+###
 
-def extract_shadow_timings(ts,intsy,FPS,ignore,recording,shadow_dur = 8.):
+
+def extract_shadow_timings(ts,intsy,FPS,recording,ignore,shadow_dur = 8.,threshold_factor = 3.):
     # get lowest value
     sos = signal.butter(6, FPS/2.1, 'low', fs=FPS, output='sos')
     intsy = signal.sosfilt(sos, intsy)
     
     # thresh = np.median(intsy) - 0.65 * ( np.median(intsy) - intsy.min() )
-    thresh = np.median(intsy) - 5 * np.std(intsy)
+    thresh = np.median(intsy) - threshold_factor * np.std(intsy)
     
     shdf = pd.DataFrame(columns=['recording','shadowON-abs','shadowOFF-abs'])
     t = ts.max()
@@ -118,9 +121,10 @@ while vidcap.isOpened():
     t_idx += 1
     
 shdf = extract_shadow_timings(ts,intsy,FPS,
-                                ignore = ignore_,
                                 recording = os.path.basename(videofile),
-                                shadow_dur = shadow_duration_
+                                ignore = ignore_,
+                                shadow_dur = shadow_duration_,
+                                threshold_factor = threshold_factor_
                                 )
 
 videofilename = videofile.split('.')[0]
