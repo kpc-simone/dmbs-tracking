@@ -1,5 +1,3 @@
-# extract_ambient_lighting.py
-
 from tkinter.filedialog import askopenfilename
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
