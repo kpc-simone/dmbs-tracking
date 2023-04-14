@@ -4,16 +4,23 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import pandas as pd
 import numpy as np
+import argparse
 import sys,os
 import cv2
 
 ### script parameters ###
-shadow_duration_ = 8.       # the duration of the shadow; the script runs the video backwards
-ignore_ = 60.               # the time interval at the beginning of the recording where no shadows are presented
-threshold_factor_ = 3.      # the factor by which to scale the std dev during the baseline for intensity thresholding
-###
+parser = argparse.ArgumentParser()
+parser.add_argument('--shadow_duration', type = float, nargs = '?', const = 8., default = 8.,
+                    help = 'Duration of the shadow in seconds. Default is 8s.')
+parser.add_argument('--ignore_start', type = float, nargs = '?', const = 180., default = 180.,
+                    help = 'Amount of time to skip at the beginning of the video, when shadows are not presented. Default is 60s.')
+parser.add_argument('--ignore_end', type = float, nargs = '?', const = 0., default = 0.,
+                    help = 'Amount of time to ignore at the end of the video, when shadows are not presented. Default is 0s.')
+parser.add_argument('--threshold_factor', type = float, nargs = '?', const = 3., default = 3.,
+                    help = 'Scaling factor to apply for intensity thresholding. Default is 3.')
 
-def extract_shadow_timings(ts,intsy,FPS,recording,ignore,shadow_dur = 8.,threshold_factor = 3.):
+
+def extract_shadow_timings(ts,intsy,FPS,recording,ignore_start,ignore_end = 0.,shadow_dur = 8.,threshold_factor = 3.):
     # get lowest value
     sos = signal.butter(6, FPS/2.1, 'low', fs=FPS, output='sos')
     intsy = signal.sosfilt(sos, intsy)
@@ -23,10 +30,11 @@ def extract_shadow_timings(ts,intsy,FPS,recording,ignore,shadow_dur = 8.,thresho
     
     shdf = pd.DataFrame(columns=['recording','shadowON-abs','shadowOFF-abs'])
     t = ts.max()
-    idx = int(len(intsy)-1)
+    fps = 1 / np.diff(ts).mean()
+    idx = int(  len(intsy)-1 - ignore_end * fps ) 
     
     fig,ax = plt.subplots(1,1,figsize=(8,3))
-    while (t > ignore) & (idx > 1):
+    while (t > ignore_start) & (idx > 1):
         val = intsy[idx]
         t = ts[idx]
         if val < thresh:
@@ -78,8 +86,15 @@ def getROI(frame,roi):
     
     return roi
 
-ts = 100
-t0 = 0
+if __name__ == '__main__':
+    args = parser.parse_args()
+    shadow_duration = args.shadow_duration
+    ignore_start = args.ignore_start
+    ignore_end = args.ignore_end
+    threshold_factor = args.threshold_factor
+    
+    ts = ignore_start
+    t0 = 0
 
 videofile = askopenfilename()
 vidcap = cv2.VideoCapture(videofile)
@@ -119,9 +134,10 @@ while vidcap.isOpened():
     
 shdf = extract_shadow_timings(ts,intsy,FPS,
                                 recording = os.path.basename(videofile),
-                                ignore = ignore_,
-                                shadow_dur = shadow_duration_,
-                                threshold_factor = threshold_factor_
+                                ignore_start = ignore_start,
+                                ignore_end = ignore_end,
+                                shadow_dur = shadow_duration,
+                                threshold_factor = threshold_factor
                                 )
 
 videofilename = videofile.split('.')[0]
