@@ -46,10 +46,31 @@ def merge_labels(labels_image,labels_to_merge,label_after_merge):
     labels_map[labels_to_merge] = label_after_merge
     return labels_map[labels_image]
 
+print('select video file for tracking')
+videofile = askopenfilename(
+    title='Select video to analyze',
+    filetypes=[('Video Files', '*.avi; *.MP4'), ('All Files', '*.*')]
+    )
+
+videofilename = os.path.basename(videofile)[:-4]
+print(videofilename)
+
+# initialize matrices
+bg_full = cv2.imread(askopenfilename(
+    title='select background model image file',
+    filetypes=[('Image Files', '*.png'), ('All Files', '*.*')]
+    )
+)
+
+outdir = askdirectory(title='Select output directory for tracking data')
+
+vidcap = cv2.VideoCapture(videofile)
+FPS = vidcap.get(cv2.CAP_PROP_FPS)
+
 if __name__ == '__main__':
     args = sys.argv[1:]
     
-    if len(args) == 1:
+    if len(args) <= 1:
         pos_0 = 0
         pos_f = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)/FPS
     else:
@@ -80,27 +101,6 @@ if '--plot' in args:
     
 else: 
     plot = False
-
-print('select video file for tracking')
-videofile = askopenfilename(
-    title='Select video to analyze',
-    filetypes=[('Video Files', '*.avi; *.MP4'), ('All Files', '*.*')]
-    )
-
-videofilename = os.path.basename(videofile)[:-4]
-print(videofilename)
-
-# initialize matrices
-bg_full = cv2.imread(askopenfilename(
-    title='select background model image file',
-    filetypes=[('Image Files', '*.png'), ('All Files', '*.*')]
-    )
-)
-
-outdir = askdirectory(title='Select output directory for tracking data')
-
-vidcap = cv2.VideoCapture(videofile)
-FPS = vidcap.get(cv2.CAP_PROP_FPS)
 
 # video mid-point
 vidcap.set(cv2.CAP_PROP_POS_FRAMES,int(pos_0 * FPS))         

@@ -97,7 +97,7 @@ You will then be prompted to select the ROI where the shadow will appear in the 
 
 ![](https://github.com/kpc-simone/dmbs-tracking/blob/main/docs/shadow_roi_selection.png)
 
-The script may take several minutes to run. This depends on the size of the video and that of the selected ROI. 
+The script may take several minutes to run. This depends on the size of the video. 
 
 ## Parameters
 
